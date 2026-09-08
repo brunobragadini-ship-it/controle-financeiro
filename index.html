@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro Multimeses</title>
+    <style>
+        :root { --primary: #6366f1; --primary-hover: #4f46e5; --success: #16a34a; --danger: #dc2626; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; padding-bottom: 90px; -webkit-tap-highlight-color: transparent; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1, h2 { text-align: center; color: #818cf8; margin-bottom: 10px; }
+        
+        .bar-abas { display: flex; gap: 10px; align-items: center; justify-content: space-between; background: var(--card); padding: 12px 16px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 20px; flex-wrap: wrap; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
+        .bar-abas select { padding: 8px 12px; background: #0f172a; color: #fff; border: 1px solid #475569; border-radius: 8px; font-weight: bold; font-size: 14px; outline: none; cursor: pointer; }
+        .btn-header { background: #3b82f6; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; transition: transform 0.1s ease, opacity 0.2s; }
+        .btn-header:active { transform: scale(0.96); }
+        .btn-novo-item { background: var(--primary); }
+        .btn-novo-item:hover { background: var(--primary-hover); }
+        .btn-excluir-aba { background: var(--danger); }
+
+        .card { background: var(--card); padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #334155; }
+        .painel-resumos { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card-resumo { border-radius: 12px; padding: 15px; background: #581c87; border: 1px solid #7e22ce; }
+        .card-resumo.amarelo { background: #b45309; border: 1px solid #d97706; }
+        .card-resumo h3 { margin: 0 0 10px 0; font-size: 13px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px; letter-spacing: 0.5px; }
+        .linha-resumo { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+        
+        /* Modal Fluido com Animação */
+        .modal-overlay { display: flex; opacity: 0; pointer-events: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); z-index: 999; justify-content: center; align-items: center; transition: opacity 0.25s ease; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-card { background: var(--card); padding: 25px; border-radius: 20px; width: 90%; max-width: 420px; border: 1px solid #475569; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6); transform: translateY(20px) scale(0.95); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); position: relative; }
+        .modal-overlay.active .modal-card { transform: translateY(0) scale(1); }
+        
+        form input, form select { width: 100%; padding: 12px; margin-bottom: 12px; background: #0f172a; border: 1px solid #475569; color: #fff; border-radius: 8px; box-sizing: border-box; font-size: 14px; outline: none; }
+        form input:focus, form select:focus { border-color: var(--primary); }
+        form button { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; margin-top: 5px; transition: background 0.2s, transform 0.1s; }
+        form button:active { transform: scale(0.98); }
+        
+        .btn-fechar-modal { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; font-weight: bold; }
+
+        ul { list-style: none; padding: 0; margin: 5px 0 15px 0; }
+        li { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #334155; align-items: center; font-size: 14px; transition: background 0.15s ease; border-radius: 6px; }
+        li:hover { background: rgba(255, 255, 255, 0.02); }
+        li.is-entrada { border-left: 4px solid var(--success); }
+        li.is-despesa { border-left: 4px solid var(--danger); }
+        .btn-acao { background: transparent; border: none; cursor: pointer; font-size: 16px; margin-left: 8px; opacity: 0.8; transition: opacity 0.2s, transform 0.1s; }
+        .btn-acao:hover { opacity: 1; transform: scale(1.1); }
+        .subtitulo { font-size: 14px; color: #38bdf8; background: #0f172a; padding: 8px 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; }
+
+        /* Indicator Sync Discreto */
+        #syncIndicator { display: none; font-size: 12px; color: #38bdf8; position: fixed; top: 10px; right: 10px; background: #1e293b; padding: 6px 12px; border-radius: 20px; border: 1px solid #334155; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+
+        .fab-button { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; border: none; width: 56px; height: 56px; border-radius: 28px; font-size: 24px; box-shadow: 0 10px 20px rgba(0,0,0,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 900; transition: transform 0.2s, background 0.2s; }
+        .fab-button:active { transform: scale(0.9); }
+    </style>
+</head>
+<body>
+
+<div id="syncIndicator">🔄 Sincronizando...</div>
+
+<div class="container">
+    <h1>Controle Financeiro</h1>
+
+    <div class="bar-abas">
+        <div>
+            <label style="font-size:13px; color:#94a3b8; margin-right:8px;">Mês / Aba:</label>
+            <select id="selectAba" onchange="trocarAba(this.value)"></select>
+        </div>
+        <div style="display:flex; gap:6px;">
+            <button class="btn-header btn-novo-item" onclick="abrirModalFormulario()">+ Lançamento</button>
+            <button class="btn-header" onclick="criarNovaAba()">+ Novo Mês</button>
+            <button class="btn-header btn-excluir-aba" onclick="excluirAbaAtual()" title="Excluir Mês Atual">🗑️ Excluir Mês</button>
+        </div>
+    </div>
+
+    <div class="painel-resumos">
+        <div class="card-resumo">
+            <h3>SALDO DIA 05</h3>
+            <div class="linha-resumo"><span>Renda:</span> <strong id="r05">R$ 0,00</strong></div>
+            <div class="linha-resumo"><span>Despesas:</span> <strong id="d05">R$ 0,00</strong></div>
+            <div class="linha-resumo" style="border-top:1px solid rgba(255,255,255,0.2); padding-top:5px;"><span>Resultado:</span> <strong id="res05">R$ 0,00</strong></div>
+        </div>
+        <div class="card-resumo">
+            <h3>PROJEÇÃO DIA 20</h3>
+            <div class="linha-resumo"><span>Renda:</span> <strong id="r20">R$ 0,00</strong></div>
+            <div class="linha-resumo"><span>Despesas:</span> <strong id="d20">R$ 0,00</strong></div>
+            <div class="linha-resumo" style="border-top:1px solid rgba(255,255,255,0.2); padding-top:5px;"><span>Resultado:</span> <strong id="res20">R$ 0,00</strong></div>
+        </div>
+        <div class="card-resumo amarelo">
+            <h3>FECHAMENTO MENSAL</h3>
+            <div class="linha-resumo"><span>Renda Total:</span> <strong id="rTot">R$ 0,00</strong></div>
+            <div class="linha-resumo"><span>Despesas:</span> <strong id="dTot">R$ 0,00</strong></div>
+            <div class="linha-resumo" style="border-top:1px solid rgba(255,255,255,0.2); padding-top:5px;"><span>Sobra:</span> <strong id="resTot">R$ 0,00</strong></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Lançamentos</h2>
+        <div id="status" style="text-align:center; color:#94a3b8; display:none;">Carregando dados...</div>
+        
+        <div class="subtitulo">📅 Período do Dia 05</div>
+        <ul id="lista05"></ul>
+
+        <div class="subtitulo">📅 Período do Dia 20</div>
+        <ul id="lista20"></ul>
+    </div>
+</div>
+
+<div id="modalForm" class="modal-overlay" onclick="fecharModalAoClicarFora(event)">
+    <div class="modal-card">
+        <button class="btn-fechar-modal" onclick="fecharModalFormulario()">✕</button>
+        <h2 id="modalTitulo" style="margin-top:0;">Incluir Lançamento</h2>
+        
+        <form id="formTransacao" onsubmit="salvarTransacao(event)">
+            <input type="hidden" id="editLinha" value="">
+            <label style="font-size: 12px; color: #94a3b8;">Descrição</label>
+            <input type="text" id="descricao" placeholder="Ex: Mercado" required autocomplete="off">
+            
+            <label style="font-size: 12px; color: #94a3b8;">Valor (R$)</label>
+            <input type="number" step="0.01" id="valor" placeholder="Ex: 150.00" required>
+            
+            <label style="font-size: 12px; color: #94a3b8;">Data</label>
+            <input type="text" id="dataPgto" placeholder="Ex: 05/10 ou 20/10" required>
+            
+            <label style="font-size: 12px; color: #94a3b8;">Tipo de Lançamento</label>
+            <select id="tipo">
+                <option value="entrada">Entrada (Renda)</option>
+                <option value="despesa">Despesa (Gasto)</option>
+            </select>
+            
+            <button type="submit" id="btnSalvar">Salvar na Planilha</button>
+        </form>
+    </div>
+</div>
+
+<button class="fab-button" onclick="abrirModalFormulario()" title="Adicionar Lançamento">+</button>
+
+<script>
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwXDkbbZPT8UhuKcq2SfYFykXFhqjfgDbpzevQQs8eO0RvSEfIG-XtKfqvnNfGZ2XSCTw/exec';
+    
+    let cacheDados = {}; // Cache para transições instantâneas entre meses
+    let dadosLocais = [];
+    let abaSelecionada = '';
+    let listaAbasGlobal = [];
+
+    function mostrarSync(ativo) {
+        document.getElementById('syncIndicator').style.display = ativo ? 'block' : 'none';
+    }
+
+    async function carregarDados(aba = '', forcarDownload = false) {
+        if (aba && cacheDados[aba] && !forcarDownload) {
+            abaSelecionada = aba;
+            dadosLocais = cacheDados[aba];
+            renderizarTela();
+        } else {
+            document.getElementById('status').style.display = 'block';
+        }
+
+        mostrarSync(true);
+
+        try {
+            const url = aba ? `${WEB_APP_URL}?aba=${encodeURIComponent(aba)}` : WEB_APP_URL;
+            const resposta = await fetch(url);
+            const json = await resposta.json();
+            
+            dadosLocais = json.dados || [];
+            abaSelecionada = json.abaAtual;
+            listaAbasGlobal = json.listaAbas || [];
+            cacheDados[abaSelecionada] = [...dadosLocais];
+
+            atualizarSelectAbas();
+            document.getElementById('status').style.display = 'none';
+            renderizarTela();
+        } catch (e) {
+            console.error(e);
+            document.getElementById('status').innerText = 'Erro ao carregar os dados.';
+        } finally {
+            mostrarSync(false);
+        }
+    }
+
+    function atualizarSelectAbas() {
+        const select = document.getElementById('selectAba');
+        select.innerHTML = '';
+        listaAbasGlobal.forEach(nome => {
+            const opt = document.createElement('option');
+            opt.value = nome;
+            opt.innerText = nome;
+            if (nome === abaSelecionada) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    function trocarAba(novaAba) {
+        carregarDados(novaAba);
+    }
+
+    function abrirModalFormulario() {
+        document.getElementById('modalForm').classList.add('active');
+        setTimeout(() => document.getElementById('descricao').focus(), 150);
+    }
+
+    function fecharModalFormulario() {
+        document.getElementById('modalForm').classList.remove('active');
+        document.getElementById('editLinha').value = '';
+        document.getElementById('formTransacao').reset();
+        document.getElementById('modalTitulo').innerText = 'Incluir Lançamento';
+        document.getElementById('btnSalvar').innerText = 'Salvar na Planilha';
+    }
+
+    function fecharModalAoClicarFora(e) {
+        if (e.target.id === 'modalForm') fecharModalFormulario();
+    }
+
+    async function criarNovaAba() {
+        const nomeAba = prompt('Digite o nome do novo mês (ex: Novembro):');
+        if (!nomeAba) return;
+
+        listaAbasGlobal.push(nomeAba);
+        abaSelecionada = nomeAba;
+        dadosLocais = [];
+        cacheDados[nomeAba] = [];
+        
+        atualizarSelectAbas();
+        renderizarTela();
+
+        mostrarSync(true);
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ acao: 'criarAba', nomeAba: nomeAba })
+            });
+            await carregarDados(nomeAba, true);
+        } catch (e) {
+            alert('Erro ao criar mês.');
+        } finally {
+            mostrarSync(false);
+        }
+    }
+
+    async function excluirAbaAtual() {
+        if (!confirm(`Deseja apagar o mês "${abaSelecionada}"?`)) return;
+
+        const abaAntiga = abaSelecionada;
+        listaAbasGlobal = listaAbasGlobal.filter(a => a !== abaAntiga);
+        delete cacheDados[abaAntiga];
+
+        abaSelecionada = listaAbasGlobal[0] || '';
+        dadosLocais = cacheDados[abaSelecionada] || [];
+
+        atualizarSelectAbas();
+        renderizarTela();
+
+        mostrarSync(true);
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ acao: 'excluirAba', aba: abaAntiga })
+            });
+            await carregarDados('', true);
+        } catch (e) {
+            alert('Erro ao excluir mês.');
+        } finally {
+            mostrarSync(false);
+        }
+    }
+
+    async function salvarTransacao(e) {
+        e.preventDefault();
+        const linhaEdit = document.getElementById('editLinha').value;
+        const payload = {
+            aba: abaSelecionada,
+            descricao: document.getElementById('descricao').value,
+            valor: parseFloat(document.getElementById('valor').value),
+            dataPgto: document.getElementById('dataPgto').value,
+            tipo: document.getElementById('tipo').value
+        };
+
+        // Atualização Otimista
+        if (linhaEdit) {
+            payload.acao = 'editar';
+            payload.linhaPlanilha = parseInt(linhaEdit);
+            const idx = dadosLocais.findIndex(i => i.linhaPlanilha === payload.linhaPlanilha);
+            if (idx !== -1) dadosLocais[idx] = { ...dadosLocais[idx], ...payload };
+        } else {
+            payload.acao = 'incluir';
+            payload.linhaPlanilha = Date.now(); // ID temporário
+            dadosLocais.push(payload);
+        }
+
+        cacheDados[abaSelecionada] = [...dadosLocais];
+        renderizarTela();
+        fecharModalFormulario();
+
+        mostrarSync(true);
+        try {
+            await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+            await carregarDados(abaSelecionada, true);
+        } catch(e) {
+            console.error(e);
+        } finally {
+            mostrarSync(false);
+        }
+    }
+
+    function prepararEdicao(linha) {
+        const item = dadosLocais.find(i => i.linhaPlanilha === linha);
+        if (!item) return;
+
+        document.getElementById('editLinha').value = item.linhaPlanilha;
+        document.getElementById('descricao').value = item.descricao;
+        document.getElementById('valor').value = item.valor;
+        document.getElementById('dataPgto').value = item.dataPgto;
+        document.getElementById('tipo').value = item.tipo;
+
+        document.getElementById('modalTitulo').innerText = 'Editar Lançamento';
+        document.getElementById('btnSalvar').innerText = 'Atualizar Item';
+        
+        abrirModalFormulario();
+    }
+
+    async function excluirTransacao(linha) {
+        if (!confirm('Apagar este item?')) return;
+
+        // Remoção Otimista
+        dadosLocais = dadosLocais.filter(i => i.linhaPlanilha !== linha);
+        cacheDados[abaSelecionada] = [...dadosLocais];
+        renderizarTela();
+
+        mostrarSync(true);
+        try {
+            await fetch(WEB_APP_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ acao: 'excluir', aba: abaSelecionada, linhaPlanilha: linha }) 
+            });
+        } catch(e) {
+            console.error(e);
+        } finally {
+            mostrarSync(false);
+        }
+    }
+
+    function renderizarTela() {
+        let r05 = 0, d05 = 0, r20 = 0, d20 = 0;
+        const ul05 = document.getElementById('lista05');
+        const ul20 = document.getElementById('lista20');
+        ul05.innerHTML = '';
+        ul20.innerHTML = '';
+
+        dadosLocais.forEach(item => {
+            const val = parseFloat(item.valor) || 0;
+            const dataTexto = String(item.dataPgto || '');
+            const ehDia20 = dataTexto.includes('20');
+
+            const li = document.createElement('li');
+            li.className = item.tipo === 'entrada' ? 'is-entrada' : 'is-despesa';
+            li.innerHTML = `
+                <div>
+                    <strong>${item.descricao}</strong><br>
+                    <span style="font-size:11px; color:#94a3b8;">Data: ${dataTexto}</span>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <span style="font-weight:bold; color:${item.tipo === 'entrada' ? '#16a34a' : '#dc2626'}">
+                        ${item.tipo === 'entrada' ? '+' : '-'} R$ ${val.toFixed(2)}
+                    </span>
+                    <button class="btn-acao" onclick="prepararEdicao(${item.linhaPlanilha})" title="Editar">✏️</button>
+                    <button class="btn-acao" onclick="excluirTransacao(${item.linhaPlanilha})" title="Excluir" style="color:#ef4444;">🗑️</button>
+                </div>
+            `;
+
+            if (ehDia20) {
+                if (item.tipo === 'entrada') r20 += val; else d20 += val;
+                ul20.appendChild(li);
+            } else {
+                if (item.tipo === 'entrada') r05 += val; else d05 += val;
+                ul05.appendChild(li);
+            }
+        });
+
+        document.getElementById('r05').innerText = `R$ ${r05.toFixed(2)}`;
+        document.getElementById('d05').innerText = `R$ ${d05.toFixed(2)}`;
+        document.getElementById('res05').innerText = `R$ ${(r05 - d05).toFixed(2)}`;
+
+        document.getElementById('r20').innerText = `R$ ${r20.toFixed(2)}`;
+        document.getElementById('d20').innerText = `R$ ${d20.toFixed(2)}`;
+        document.getElementById('res20').innerText = `R$ ${(r20 - d20).toFixed(2)}`;
+
+        const totalRenda = r05 + r20;
+        const totalDespesas = d05 + d20;
+        document.getElementById('rTot').innerText = `R$ ${totalRenda.toFixed(2)}`;
+        document.getElementById('dTot').innerText = `R$ ${totalDespesas.toFixed(2)}`;
+        document.getElementById('resTot').innerText = `R$ ${(totalRenda - totalDespesas).toFixed(2)}`;
+    }
+
+    carregarDados();
+</script>
+
+</body>
+</html>

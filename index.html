@@ -6,10 +6,10 @@
     <meta name="theme-color" content="#000000">
     <title>Controle Financeiro Multimeses</title>
     
-    <!-- Importação da fonte Montserrat -->
+    <!-- Importação da fonte Maserat Arabic / Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Maserat+Arabic:wght@700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
 
     <!-- Link para o arquivo manifest.json real -->
     <link rel="manifest" href="manifest.json">
@@ -39,30 +39,32 @@
         
         .container { max-width: 800px; margin: 0 auto; }
         
-        /* Layout do Header com Logo Gigante em Largura */
+        /* Layout do Header com Logo Reduzida e Fonte Maserat Arabic */
         .header-app {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 12px;
             margin-bottom: 24px;
-            flex-wrap: wrap;
         }
 
         .header-logo {
-            width: 380px; /* Largura forçada para ficar grande e visível */
+            width: 190px; /* Reduzido na metade */
             height: auto;
-            max-width: 90vw;
+            max-width: 80vw;
             object-fit: contain;
         }
 
         h1 { 
-            font-family: 'Montserrat', sans-serif; 
+            font-family: 'Maserat Arabic', 'Montserrat', sans-serif; 
             font-weight: 700; 
             color: #ffffff; 
             margin: 0; 
-            font-size: 28px;
+            font-size: 26px;
             text-align: center;
+            text-transform: uppercase; /* Caixa Alta */
+            letter-spacing: 1px;
         }
 
         h2 { text-align: center; color: #ffffff; margin-bottom: 10px; font-family: 'Montserrat', sans-serif; }
@@ -110,13 +112,12 @@
         .fab-button:hover { background: var(--primary-hover); }
         .fab-button:active { transform: scale(0.9); }
 
-        /* Ajuste para celulares */
         @media (max-width: 480px) {
             .header-logo {
-                width: 280px;
+                width: 150px;
             }
             h1 {
-                font-size: 22px;
+                font-size: 20px;
             }
         }
     </style>

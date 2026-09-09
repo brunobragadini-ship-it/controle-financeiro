@@ -2,9 +2,7 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "COM_SEU_PACKAGE_AQUI",
-    "sha256_cert_fingerprints": [
-      "SUA_CHAVE_SHA256_AQUI"
-    ]
+    "package_name": "io.github.brunobragadini_ship_it.twa",
+    "sha256_cert_fingerprints": ["FA:72:96:CB:4B:87:BC:7F:99:EB:D1:61:98:3A:55:A9:5F:C2:59:53:C4:65:6A:40:82:A1:BD:AF:5A:C6:B6:1A"]
   }
 }]

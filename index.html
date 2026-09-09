@@ -39,11 +39,12 @@
         
         .container { max-width: 800px; margin: 0 auto; }
         
-        /* Header simplificado apenas com o Título */
+        /* Header com espaço no topo e centralizado */
         .header-app {
             display: flex;
             justify-content: center;
             align-items: center;
+            margin-top: 25px; /* Espaço adicionado entre o título e o topo da página */
             margin-bottom: 24px;
         }
 
@@ -54,7 +55,7 @@
             margin: 0; 
             font-size: 26px;
             text-align: center;
-            text-transform: uppercase; /* Caixa Alta */
+            text-transform: uppercase;
             letter-spacing: 1px;
         }
 
@@ -68,7 +69,7 @@
         }
 
         .footer-logo {
-            width: 170px; /* Tamanho proporcional na metade */
+            width: 170px;
             height: auto;
             max-width: 70vw;
             object-fit: contain;
@@ -121,6 +122,9 @@
         .fab-button:active { transform: scale(0.9); }
 
         @media (max-width: 480px) {
+            .header-app {
+                margin-top: 20px;
+            }
             h1 {
                 font-size: 22px;
             }
@@ -183,7 +187,7 @@
         <ul id="lista20"></ul>
     </div>
 
-    <!-- Logo posicionada no rodapé da página -->
+    <!-- Logo no rodapé -->
     <div class="footer-app">
         <img src="nova.finanças_logo.png" alt="Logo Nova Finanças" class="footer-logo">
     </div>

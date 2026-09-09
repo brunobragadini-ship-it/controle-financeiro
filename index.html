@@ -39,21 +39,22 @@
         
         .container { max-width: 800px; margin: 0 auto; }
         
-        /* Layout do Header com Logo Ainda Maior */
+        /* Layout do Header com Logo Gigante e Centralizada */
         .header-app {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 16px;
+            gap: 8px;
             margin-bottom: 24px;
-            flex-wrap: wrap;
         }
 
         .header-logo {
-            height: 140px; /* Aumentado consideravelmente para dar máximo destaque */
+            height: 280px; /* Aumentado drasticamente para compensar as margens da imagem */
             width: auto;
             max-width: 100%;
             object-fit: contain;
+            margin-bottom: -30px; /* Reduz o espaço transparente inferior da imagem */
         }
 
         h1 { 
@@ -61,7 +62,8 @@
             font-weight: 700; 
             color: #ffffff; 
             margin: 0; 
-            font-size: 28px;
+            font-size: 26px;
+            text-align: center;
         }
 
         h2 { text-align: center; color: #ffffff; margin-bottom: 10px; font-family: 'Montserrat', sans-serif; }
@@ -109,13 +111,14 @@
         .fab-button:hover { background: var(--primary-hover); }
         .fab-button:active { transform: scale(0.9); }
 
-        /* Ajuste responsivo para celulares */
+        /* Ajuste para telas menores */
         @media (max-width: 480px) {
             .header-logo {
-                height: 100px;
+                height: 180px;
+                margin-bottom: -20px;
             }
             h1 {
-                font-size: 22px;
+                font-size: 20px;
             }
         }
     </style>

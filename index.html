@@ -6,8 +6,8 @@
     <meta name="theme-color" content="#0f172a">
     <title>Controle Financeiro Multimeses</title>
     
-    <!-- PWA Manifest Embutido via Data URI -->
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Controle Financeiro","short_name":"Financeiro","start_url":"./index.html","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2845/2845873.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}'>
+    <!-- Link para o arquivo manifest.json real -->
+    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2845/2845873.png">
 
     <style>
@@ -394,14 +394,9 @@
         document.getElementById('resTot').innerText = `R$ ${(totalRenda - totalDespesas).toFixed(2)}`;
     }
 
-    // Registro automático do Service Worker
+    // Registro correto do arquivo sw.js
     if ('serviceWorker' in navigator) {
-        const swCode = `
-            self.addEventListener('install', e => self.skipWaiting());
-            self.addEventListener('fetch', e => {});
-        `;
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+        navigator.serviceWorker.register('sw.js').catch(() => {});
     }
 
     carregarDados();

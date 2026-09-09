@@ -39,22 +39,24 @@
         
         .container { max-width: 800px; margin: 0 auto; }
         
-        /* Layout do Header com Logo Gigante e Centralizada */
+        /* Layout do Header - Logo Gigante e Sem Margens Sobrando */
         .header-app {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 8px;
             margin-bottom: 24px;
+            overflow: hidden; /* Evita rolagem lateral por conta da escala */
         }
 
         .header-logo {
-            height: 280px; /* Aumentado drasticamente para compensar as margens da imagem */
+            height: 450px; /* Altura máxima para forçar expansão */
             width: auto;
             max-width: 100%;
             object-fit: contain;
-            margin-bottom: -30px; /* Reduz o espaço transparente inferior da imagem */
+            transform: scale(1.4); /* Aplica zoom para eliminar as bordas transparentes nativas */
+            margin-top: -40px;
+            margin-bottom: -40px;
         }
 
         h1 { 
@@ -64,6 +66,8 @@
             margin: 0; 
             font-size: 26px;
             text-align: center;
+            position: relative;
+            z-index: 2;
         }
 
         h2 { text-align: center; color: #ffffff; margin-bottom: 10px; font-family: 'Montserrat', sans-serif; }
@@ -111,10 +115,12 @@
         .fab-button:hover { background: var(--primary-hover); }
         .fab-button:active { transform: scale(0.9); }
 
-        /* Ajuste para telas menores */
+        /* Ajuste para celulares */
         @media (max-width: 480px) {
             .header-logo {
-                height: 180px;
+                height: 250px;
+                transform: scale(1.3);
+                margin-top: -20px;
                 margin-bottom: -20px;
             }
             h1 {

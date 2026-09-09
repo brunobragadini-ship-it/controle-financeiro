@@ -39,21 +39,12 @@
         
         .container { max-width: 800px; margin: 0 auto; }
         
-        /* Layout do Header com Logo Reduzida e Fonte Maserat Arabic */
+        /* Header simplificado apenas com o Título */
         .header-app {
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            gap: 12px;
+            align-items: center;
             margin-bottom: 24px;
-        }
-
-        .header-logo {
-            width: 190px; /* Reduzido na metade */
-            height: auto;
-            max-width: 80vw;
-            object-fit: contain;
         }
 
         h1 { 
@@ -65,6 +56,23 @@
             text-align: center;
             text-transform: uppercase; /* Caixa Alta */
             letter-spacing: 1px;
+        }
+
+        /* Rodapé com a Logo Centralizada */
+        .footer-app {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .footer-logo {
+            width: 170px; /* Tamanho proporcional na metade */
+            height: auto;
+            max-width: 70vw;
+            object-fit: contain;
+            opacity: 0.9;
         }
 
         h2 { text-align: center; color: #ffffff; margin-bottom: 10px; font-family: 'Montserrat', sans-serif; }
@@ -113,11 +121,11 @@
         .fab-button:active { transform: scale(0.9); }
 
         @media (max-width: 480px) {
-            .header-logo {
-                width: 150px;
-            }
             h1 {
-                font-size: 20px;
+                font-size: 22px;
+            }
+            .footer-logo {
+                width: 140px;
             }
         }
     </style>
@@ -128,7 +136,6 @@
 
 <div class="container">
     <div class="header-app">
-        <img src="nova.finanças_logo.png" alt="Logo Nova Finanças" class="header-logo">
         <h1>Controle Financeiro</h1>
     </div>
 
@@ -174,6 +181,11 @@
 
         <div class="subtitulo">📅 Período do Dia 20</div>
         <ul id="lista20"></ul>
+    </div>
+
+    <!-- Logo posicionada no rodapé da página -->
+    <div class="footer-app">
+        <img src="nova.finanças_logo.png" alt="Logo Nova Finanças" class="footer-logo">
     </div>
 </div>
 

@@ -15,6 +15,9 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="nova.finanças_logo.png">
 
+    <!-- SDK do Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         :root { 
             --primary: #5950af; 
@@ -39,12 +42,11 @@
         
         .container { max-width: 800px; margin: 0 auto; }
         
-        /* Header com espaço no topo e centralizado */
         .header-app {
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 25px; /* Espaço adicionado entre o título e o topo da página */
+            margin-top: 25px;
             margin-bottom: 24px;
         }
 
@@ -59,7 +61,6 @@
             letter-spacing: 1px;
         }
 
-        /* Rodapé com a Logo Centralizada */
         .footer-app {
             display: flex;
             justify-content: center;
@@ -122,15 +123,9 @@
         .fab-button:active { transform: scale(0.9); }
 
         @media (max-width: 480px) {
-            .header-app {
-                margin-top: 20px;
-            }
-            h1 {
-                font-size: 22px;
-            }
-            .footer-logo {
-                width: 140px;
-            }
+            .header-app { margin-top: 20px; }
+            h1 { font-size: 22px; }
+            .footer-logo { width: 140px; }
         }
     </style>
 </head>
@@ -199,7 +194,7 @@
         <h2 id="modalTitulo" style="margin-top:0;">Incluir Lançamento</h2>
         
         <form id="formTransacao" onsubmit="salvarTransacao(event)">
-            <input type="hidden" id="editLinha" value="">
+            <input type="hidden" id="editId" value="">
             <label style="font-size: 12px; color: #94a3b8;">Descrição</label>
             <input type="text" id="descricao" placeholder="Ex: Mercado" required autocomplete="off">
             
@@ -207,7 +202,7 @@
             <input type="number" step="0.01" id="valor" placeholder="Ex: 150.00" required>
             
             <label style="font-size: 12px; color: #94a3b8;">Data</label>
-            <input type="text" id="dataPgto" placeholder="Ex: 05/10 ou 20/10" required>
+            <input type="text" id="dataPgto" placeholder="Ex: 05 ou 20/10" required>
             
             <label style="font-size: 12px; color: #94a3b8;">Tipo de Lançamento</label>
             <select id="tipo">
@@ -215,7 +210,7 @@
                 <option value="despesa">Despesa (Gasto)</option>
             </select>
             
-            <button type="submit" id="btnSalvar">Salvar na Planilha</button>
+            <button type="submit" id="btnSalvar">Salvar no Supabase</button>
         </form>
     </div>
 </div>
@@ -223,46 +218,61 @@
 <button class="fab-button" onclick="abrirModalFormulario()" title="Adicionar Lançamento">+</button>
 
 <script>
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwXDkbbZPT8UhuKcq2SfYFykXFhqjfgDbpzevQQs8eO0RvSEfIG-XtKfqvnNfGZ2XSCTw/exec';
+    // Suas credenciais oficiais do Supabase
+    const SUPABASE_URL = 'https://knkafsvncaohrnekekws.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_ByEJY2hmeoE6OsvA2ffTVw_zLCctTqt';
     
-    let cacheDados = {};
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
     let dadosLocais = [];
-    let abaSelecionada = '';
+    let abaSelecionada = 'Outubro';
     let listaAbasGlobal = [];
 
     function mostrarSync(ativo) {
         document.getElementById('syncIndicator').style.display = ativo ? 'block' : 'none';
     }
 
-    async function carregarDados(aba = '', forcarDownload = false) {
-        if (aba && cacheDados[aba] && !forcarDownload) {
-            abaSelecionada = aba;
-            dadosLocais = cacheDados[aba];
-            renderizarTela();
-        } else {
-            document.getElementById('status').style.display = 'block';
-        }
-
+    async function inicializarApp() {
+        document.getElementById('status').style.display = 'block';
         mostrarSync(true);
 
         try {
-            const url = aba ? `${WEB_APP_URL}?aba=${encodeURIComponent(aba)}` : WEB_APP_URL;
-            const resposta = await fetch(url);
-            const json = await resposta.json();
-            
-            dadosLocais = json.dados || [];
-            abaSelecionada = json.abaAtual;
-            listaAbasGlobal = json.listaAbas || [];
-            cacheDados[abaSelecionada] = [...dadosLocais];
+            // Busca todas as transações para descobrir quais abas/meses existem
+            const { data, error } = await _supabase.from('transacoes').select('*');
+            if (error) throw error;
+
+            const abasUnicas = [...new Set(data.map(item => item.aba))];
+            listaAbasGlobal = abasUnicas.length > 0 ? abasUnicas : ['Outubro'];
+
+            if (!listaAbasGlobal.includes(abaSelecionada)) {
+                abaSelecionada = listaAbasGlobal[0];
+            }
 
             atualizarSelectAbas();
-            document.getElementById('status').style.display = 'none';
-            renderizarTela();
+            filtrarDadosLocais(data);
         } catch (e) {
             console.error(e);
             document.getElementById('status').innerText = 'Erro ao carregar os dados.';
         } finally {
+            document.getElementById('status').style.display = 'none';
             mostrarSync(false);
+        }
+    }
+
+    function filtrarDadosLocais(todosOsDados) {
+        dadosLocais = todosOsDados.filter(item => item.aba === abaSelecionada);
+        renderizarTela();
+    }
+
+    async function carregarDados() {
+        mostrarSync(true);
+        const { data, error } = await _supabase.from('transacoes').select('*');
+        mostrarSync(false);
+        if (!error && data) {
+            const abasUnicas = [...new Set(data.map(item => item.aba))];
+            if (abasUnicas.length > 0) listaAbasGlobal = abasUnicas;
+            atualizarSelectAbas();
+            filtrarDadosLocais(data);
         }
     }
 
@@ -279,7 +289,8 @@
     }
 
     function trocarAba(novaAba) {
-        carregarDados(novaAba);
+        abaSelecionada = novaAba;
+        carregarDados();
     }
 
     function abrirModalFormulario() {
@@ -289,10 +300,10 @@
 
     function fecharModalFormulario() {
         document.getElementById('modalForm').classList.remove('active');
-        document.getElementById('editLinha').value = '';
+        document.getElementById('editId').value = '';
         document.getElementById('formTransacao').reset();
         document.getElementById('modalTitulo').innerText = 'Incluir Lançamento';
-        document.getElementById('btnSalvar').innerText = 'Salvar na Planilha';
+        document.getElementById('btnSalvar').innerText = 'Salvar no Supabase';
     }
 
     function fecharModalAoClicarFora(e) {
@@ -301,102 +312,87 @@
 
     async function criarNovaAba() {
         const nomeAba = prompt('Digite o nome do novo mês (ex: Novembro):');
-        if (!nomeAba) return;
+        if (!nomeAba || nomeAba.trim() === '') return;
 
-        listaAbasGlobal.push(nomeAba);
-        abaSelecionada = nomeAba;
-        dadosLocais = [];
-        cacheDados[nomeAba] = [];
-        
-        atualizarSelectAbas();
-        renderizarTela();
-
-        mostrarSync(true);
-        try {
-            await fetch(WEB_APP_URL, {
-                method: 'POST',
-                body: JSON.stringify({ acao: 'criarAba', nomeAba: nomeAba })
-            });
-            await carregarDados(nomeAba, true);
-        } catch (e) {
-            alert('Erro ao criar mês.');
-        } finally {
-            mostrarSync(false);
+        const nomeLimpo = nomeAba.trim();
+        if (listaAbasGlobal.includes(nomeLimpo)) {
+            alert('Este mês já existe!');
+            return;
         }
+
+        // Insere um item temporário de inicialização para fixar a nova aba no banco
+        mostrarSync(true);
+        const { error } = await _supabase.from('transacoes').insert([{
+            aba: nomeLimpo,
+            tipo: 'entrada',
+            descricao: 'Início do Mês',
+            valor: 0.00,
+            data_pgto: '01'
+        }]);
+        mostrarSync(false);
+
+        if (error) {
+            alert('Erro ao criar novo mês.');
+            console.error(error);
+            return;
+        }
+
+        abaSelecionada = nomeLimpo;
+        await carregarDados();
     }
 
     async function excluirAbaAtual() {
-        if (!confirm(`Deseja apagar o mês "${abaSelecionada}"?`)) return;
-
-        const abaAntiga = abaSelecionada;
-        listaAbasGlobal = listaAbasGlobal.filter(a => a !== abaAntiga);
-        delete cacheDados[abaAntiga];
-
-        abaSelecionada = listaAbasGlobal[0] || '';
-        dadosLocais = cacheDados[abaSelecionada] || [];
-
-        atualizarSelectAbas();
-        renderizarTela();
+        if (!confirm(`Deseja apagar o mês "${abaSelecionada}" e todos os seus lançamentos?`)) return;
 
         mostrarSync(true);
-        try {
-            await fetch(WEB_APP_URL, {
-                method: 'POST',
-                body: JSON.stringify({ acao: 'excluirAba', aba: abaAntiga })
-            });
-            await carregarDados('', true);
-        } catch (e) {
+        const { error } = await _supabase.from('transacoes').delete().eq('aba', abaSelecionada);
+        mostrarSync(false);
+
+        if (error) {
             alert('Erro ao excluir mês.');
-        } finally {
-            mostrarSync(false);
+            console.error(error);
+            return;
         }
+
+        abaSelecionada = 'Outubro';
+        await carregarDados();
     }
 
     async function salvarTransacao(e) {
         e.preventDefault();
-        const linhaEdit = document.getElementById('editLinha').value;
-        const payload = {
-            aba: abaSelecionada,
-            descricao: document.getElementById('descricao').value,
-            valor: parseFloat(document.getElementById('valor').value),
-            dataPgto: document.getElementById('dataPgto').value,
-            tipo: document.getElementById('tipo').value
-        };
-
-        if (linhaEdit) {
-            payload.acao = 'editar';
-            payload.linhaPlanilha = parseInt(linhaEdit);
-            const idx = dadosLocais.findIndex(i => i.linhaPlanilha === payload.linhaPlanilha);
-            if (idx !== -1) dadosLocais[idx] = { ...dadosLocais[idx], ...payload };
-        } else {
-            payload.acao = 'incluir';
-            payload.linhaPlanilha = Date.now();
-            dadosLocais.push(payload);
-        }
-
-        cacheDados[abaSelecionada] = [...dadosLocais];
-        renderizarTela();
-        fecharModalFormulario();
+        const idEdit = document.getElementById('editId').value;
+        const descricao = document.getElementById('descricao').value;
+        const valor = parseFloat(document.getElementById('valor').value);
+        const dataPgto = document.getElementById('dataPgto').value;
+        const tipo = document.getElementById('tipo').value;
 
         mostrarSync(true);
-        try {
-            await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
-            await carregarDados(abaSelecionada, true);
-        } catch(e) {
-            console.error(e);
-        } finally {
-            mostrarSync(false);
+        if (idEdit) {
+            // Atualizar item existente
+            await _supabase.from('transacoes').update({
+                descricao, valor, data_pgto: dataPgto, tipo
+            }).eq('id', idEdit);
+        } else {
+            // Inserir novo item
+            await _supabase.from('transacoes').insert([{
+                aba: abaSelecionada,
+                descricao, valor, data_pgto: dataPgto, tipo
+            }]);
         }
+        mostrarSync(false);
+
+        fecharModalFormulario();
+        await carregarDados();
     }
 
-    function prepararEdicao(linha) {
-        const item = dadosLocais.find(i => i.linhaPlanilha === linha);
+    function prepararEdicao(id) {
+        const item = dadosLocais.find(i => i.id === id);
         if (!item) return;
 
-        document.getElementById('editLinha').value = item.linhaPlanilha;
+        document.getElementById('editId').value = item.id;
         document.getElementById('descricao').value = item.descricao;
         document.getElementById('valor').value = item.valor;
-        document.getElementById('dataPgto').value = item.dataPgto;
+        document.getElementById('dataPgto').value = item.data_pgto;
         document.getElementById('tipo').value = item.tipo;
 
         document.getElementById('modalTitulo').innerText = 'Editar Lançamento';
@@ -405,24 +401,13 @@
         abrirModalFormulario();
     }
 
-    async function excluirTransacao(linha) {
+    async function excluirTransacao(id) {
         if (!confirm('Apagar este item?')) return;
 
-        dadosLocais = dadosLocais.filter(i => i.linhaPlanilha !== linha);
-        cacheDados[abaSelecionada] = [...dadosLocais];
-        renderizarTela();
-
         mostrarSync(true);
-        try {
-            await fetch(WEB_APP_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ acao: 'excluir', aba: abaSelecionada, linhaPlanilha: linha }) 
-            });
-        } catch(e) {
-            console.error(e);
-        } finally {
-            mostrarSync(false);
-        }
+        await _supabase.from('transacoes').delete().eq('id', id);
+        mostrarSync(false);
+        await carregarDados();
     }
 
     function renderizarTela() {
@@ -434,7 +419,7 @@
 
         dadosLocais.forEach(item => {
             const val = parseFloat(item.valor) || 0;
-            const dataTexto = String(item.dataPgto || '');
+            const dataTexto = String(item.data_pgto || '');
             const ehDia20 = dataTexto.includes('20');
 
             const li = document.createElement('li');
@@ -448,8 +433,8 @@
                     <span style="font-weight:bold; color:${item.tipo === 'entrada' ? '#16a34a' : '#dc2626'}">
                         ${item.tipo === 'entrada' ? '+' : '-'} R$ ${val.toFixed(2)}
                     </span>
-                    <button class="btn-acao" onclick="prepararEdicao(${item.linhaPlanilha})" title="Editar">✏️</button>
-                    <button class="btn-acao" onclick="excluirTransacao(${item.linhaPlanilha})" title="Excluir" style="color:#ef4444;">🗑️</button>
+                    <button class="btn-acao" onclick="prepararEdicao(${item.id})" title="Editar">✏️</button>
+                    <button class="btn-acao" onclick="excluirTransacao(${item.id})" title="Excluir" style="color:#ef4444;">🗑️</button>
                 </div>
             `;
 
@@ -477,11 +462,21 @@
         document.getElementById('resTot').innerText = `R$ ${(totalRenda - totalDespesas).toFixed(2)}`;
     }
 
+    // Listener Realtime do Supabase (Sincronização Instantânea Automática)
+    _supabase
+        .channel('public:transacoes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'transacoes' }, payload => {
+            console.log('Alteração detectada em tempo real!', payload);
+            carregarDados();
+        })
+        .subscribe();
+
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').catch(() => {});
     }
 
-    carregarDados();
+    // Inicia a aplicação buscando do Supabase
+    inicializarApp();
 </script>
 
 </body>
